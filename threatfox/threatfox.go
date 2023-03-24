@@ -43,6 +43,25 @@ func (t *ThreatFox) GetIOCByID(id string) (IOCDetail, error) {
 	return *resp.Result().(*IOCDetail), nil
 }
 
+// GetIOCByName queries ThreatFox for a particular IOC name sending an HTTP POST request to the Threatfox API
+func (t *ThreatFox) GetIOCByName(search_term string) (IOCDetail, error) {
+	if len(search_term) < 1 {
+		return IOCDetail{}, fmt.Errorf("search term is expected to be present")
+	}
+	body := fmt.Sprintf("{ \"query\": \"search_ioc\", \"search_term\": %s }", search_term)
+
+	resp, err := t.client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody([]byte(body)).
+		SetResult(IOCDetail{}).
+		Post(baseURL)
+	if err != nil {
+		return IOCDetail{}, fmt.Errorf("could not complete http POST to %s: %w", baseURL, err)
+	}
+
+	return *resp.Result().(*IOCDetail), nil
+}
+
 // GetIOCs return a copy of the current IOC dataset from ThreatFox by sending an HTTP POST request to the Threatfox API
 func (t *ThreatFox) GetIOCs(days int) ([]IOC, error) {
 	if days < 1 || days > 7 {
